@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vortex Stream - BE STREAM</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .peacock-glass {
+            background: rgba(15, 15, 20, 0.85);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+        }
+        button:focus, div[onclick]:focus {
+            outline: 2px solid #dc2626;
+            outline-offset: 2px;
+        }
+    </style>
+</head>
+<body class="bg-black text-white min-h-screen flex flex-col font-sans select-none">
+
+    <!-- Secure Login Screen -->
+    <div id="login-screen" class="fixed inset-0 z-50 flex items-center justify-center bg-black/95 p-4">
+        <div class="peacock-glass rounded-2xl p-8 max-w-md w-full shadow-2xl space-y-6 border border-gray-800">
+            <div class="text-center space-y-1">
+                <h1 class="text-3xl font-black text-red-600 tracking-wider">VORTEX STREAM</h1>
+                <p class="text-xs text-gray-400">POWERED BY BE STREAM</p>
+            </div>
+
+            <form id="auth-form" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-gray-300 mb-1">Username</label>
+                    <input type="text" id="server-user" placeholder="Enter your username" class="w-full bg-gray-900 border border-gray-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-red-600 text-white" required autocomplete="off">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-gray-300 mb-1">Password</label>
+                    <input type="password" id="server-pass" placeholder="Enter your password" class="w-full bg-gray-900 border border-gray-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-red-600 text-white" required autocomplete="off">
+                </div>
+                <div id="error-msg" class="text-red-500 text-xs text-center hidden">Invalid login credentials. Please check your subscription.</div>
+                <button type="submit" id="login-btn" class="w-full bg-red-600 hover:bg-red-700 transition font-bold py-3.5 rounded-xl text-white shadow-lg shadow-red-600/30">Sign In</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Main App Interface -->
+    <div id="app-content" class="hidden flex-1 flex flex-col">
+        <!-- Top Navigation Bar -->
+        <header class="peacock-glass sticky top-0 z-40 px-6 py-4 flex justify-between items-center border-b border-gray-800/80">
+            <div class="flex items-center gap-6">
+                <span class="text-2xl font-black text-red-600 tracking-wider">VORTEX</span>
+                <nav class="hidden sm:flex items-center gap-4 text-xs font-bold text-gray-300">
+                    <button onclick="backToDashboard()" class="hover:text-red-500 transition px-2 py-1 rounded">Home</button>
+                    <button onclick="loadCategory('live')" class="hover:text-red-500 transition px-2 py-1 rounded">Live TV & EPG</button>
+                    <button onclick="loadCategory('movies')" class="hover:text-red-500 transition px-2 py-1 rounded">Movies</button>
+                    <button onclick="loadCategory('series')" class="hover:text-red-500 transition px-2 py-1 rounded">Series</button>
+                    <button onclick="openMultiScreen()" class="bg-red-600/20 text-red-500 border border-red-600/30 px-3 py-1 rounded-lg hover:bg-red-600 hover:text-white transition">Multi-Screen</button>
+                </nav>
+            </div>
+            <div class="flex items-center gap-4">
+                <div class="hidden md:flex items-center gap-3 text-xs text-gray-300 bg-gray-900/80 px-3 py-1.5 rounded-xl border border-gray-800">
+                    <span id="geo-location" class="text-red-400 font-semibold">Loading...</span>
+                    <span class="text-gray-600">|</span>
+                    <span id="live-clock" class="font-mono font-bold text-white">00:00:00</span>
+                </div>
+                <span class="text-xs bg-emerald-500/10 text-emerald-400 px-3 py-1 rounded-full font-bold border border-emerald-500/20 flex items-center gap-1.5">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> Active
+                </span>
+                <button onclick="logout()" class="text-xs bg-gray-800 hover:bg-gray-700 text-gray-300 px-3 py-1.5 rounded-lg transition border border-gray-700">Logout</button>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="flex-1 p-6 max-w-7xl mx-auto w-full space-y-8">
+            
+            <!-- Hero Banner -->
+            <div id="hero-banner" class="peacock-glass rounded-3xl p-8 relative overflow-hidden border border-gray-800/80">
+                <div class="absolute -right-10 -top-10 w-60 h-60 bg-red-600/15 rounded-full blur-3xl"></div>
+                <div class="relative z-10 max-w-xl space-y-3">
+                    <span class="text-[10px] bg-red-600 text-white px-3 py-1 rounded-full font-bold uppercase tracking-widest">Exclusive Client Portal</span>
+                    <h2 class="text-3xl font-black tracking-wide leading-tight">Unlimited Streaming, Live TV, EPG & Trailers</h2>
+                    <p class="text-xs text-gray-400 leading-relaxed">Experience high-speed cinematic entertainment powered by BE STREAM.</p>
+                </div>
+            </div>
+
+            <!-- Categories Grid -->
+            <div id="dashboard-sections" class="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                <div tabindex="0" onclick="loadCategory('live')" class="peacock-glass rounded-2xl p-6 cursor-pointer transition duration-300 flex flex-col items-center text-center space-y-4 border border-gray-800/80 group">
+                    <div class="w-16 h-16 rounded-2xl bg-red-600/10 border border-red-600/30 flex items-center justify-center text-red-500 group-hover:scale-110 transition duration-300 shadow-lg">
+                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-bold text-white group-hover:text-red-500 transition">Live TV & EPG</h3>
+                        <p class="text-xs text-gray-400 mt-1">Global channels with program guide</p>
+                    </div>
+                </div>
+
+                <div tabindex="0" onclick="loadCategory('movies')" class="peacock-glass rounded-2xl p-6 cursor-pointer transition duration-300 flex flex-col items-center text-center space-y-4 border border-gray-800/80 group">
+                    <div class="w-16 h-16 rounded-2xl bg-red-600/10 border border-red-600/30 flex items-center justify-center text-red-500 group-hover:scale-110 transition duration-300 shadow-lg">
+                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z"/></svg>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-bold text-white group-hover:text-red-500 transition">Movies & Trailers</h3>
+                        <p class="text-xs text-gray-400 mt-1">VOD library with multi-language subtitles</p>
+                    </div>
+                </div>
+
+                <div tabindex="0" onclick="loadCategory('series')" class="peacock-glass rounded-2xl p-6 cursor-pointer transition duration-300 flex flex-col items-center text-center space-y-4 border border-gray-800/80 group">
+                    <div class="w-16 h-16 rounded-2xl bg-red-600/10 border border-red-600/30 flex items-center justify-center text-red-500 group-hover:scale-110 transition duration-300 shadow-lg">
+                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-bold text-white group-hover:text-red-500 transition">TV Series</h3>
+                        <p class="text-xs text-gray-400 mt-1">Full seasons and latest episodes</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Content Display Area -->
+            <div id="content-display-area" class="peacock-glass rounded-2xl p-6 min-h-[400px] border border-gray-800/80 hidden">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 id="section-title" class="text-xl font-bold text-red-500">Loading...</h3>
+                    <button onclick="backToDashboard()" class="text-xs bg-gray-800 hover:bg-gray-700 text-gray-300 px-4 py-2 rounded-lg transition border border-gray-700">Back</button>
+                </div>
+                <div id="items-grid" class="grid grid-cols-2 sm:grid-cols-4 gap-4"></div>
+            </div>
+
+            <!-- Video Player Modal / View with Auto-Subtitles & Trailer -->
+            <div id="player-view" class="fixed inset-0 z-50 bg-black hidden flex flex-col">
+                <div class="bg-gray-900 px-6 py-3 flex justify-between items-center border-b border-gray-800">
+                    <div class="flex items-center gap-4">
+                        <h4 id="player-title" class="font-bold text-red-500 text-sm">Now Playing</h4>
+                        <button id="trailer-btn" onclick="playTrailer()" class="bg-gray-800 hover:bg-gray-700 text-xs px-3 py-1 rounded border border-gray-700 hidden">Watch Trailer</button>
+                    </div>
+                    <button onclick="closePlayer()" class="bg-red-600 hover:bg-red-700 px-4 py-1.5 rounded-lg text-xs font-bold transition">Close Player</button>
+                </div>
+                <div class="flex-1 flex items-center justify-center bg-black relative">
+                    <video id="video-stream-player" controls autoplay class="w-full h-full max-h-[85vh] object-contain">
+                        <!-- Auto Subtitle Track Support -->
+                        <track id="sub-track" kind="subtitles" srclang="en" label="English Auto" default>
+                    </video>
+                </div>
+            </div>
+
+            <!-- Multi-Screen Modal -->
+            <div id="multiscreen-view" class="fixed inset-0 z-50 bg-black/95 hidden flex flex-col p-4">
+                <div class="flex justify-between items-center pb-4 border-b border-gray-800">
+                    <h3 class="text-lg font-bold text-red-500">Multi-Screen View (Live Channels)</h3>
+                    <button onclick="closeMultiScreen()" class="bg-red-600 hover:bg-red-700 px-4 py-1.5 rounded-lg text-xs font-bold">Close Multi-Screen</button>
+                </div>
+                <div class="flex-1 grid grid-cols-2 gap-4 pt-4">
+                    <div class="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden flex flex-col">
+                        <div class="bg-black px-3 py-1 text-xs text-gray-400">Screen 1</div>
+                        <video id="ms-player-1" controls autoplay class="flex-1 w-full bg-black object-contain"></video>
+                    </div>
+                    <div class="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden flex flex-col">
+                        <div class="bg-black px-3 py-1 text-xs text-gray-400">Screen 2</div>
+                        <video id="ms-player-2" controls autoplay class="flex-1 w-full bg-black object-contain"></video>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Scripting & API Integration -->
+    <script>
+        const ENCODED_SERVER = ["h", "t", "t", "p", ":", "/", "/", "1", "5", "1", "5", "3", "5", "4", "5", "0", "8", "4", "7", ".", "4", "k", "-", "v", "2", "-", "2", "0", "2", "6", ".", "l", "i", "v", "e", ":", "8", "0"].join('');
+        const STORAGE_KEY = "vortex_secure_session";
+        let currentType = '';
+        let currentStreamId = null;
+
+        function initHeaderWidgets() {
+            setInterval(() => {
+                const now = new Date();
+                document.getElementById('live-clock').innerText = now.toLocaleTimeString();
+            }, 1000);
+
+            fetch('https://ipapi.co/json/')
+                .then(res => res.json())
+                .then(data => {
+                    const loc = data.city && data.country_name ? `${data.city}, ${data.country_name}` : 'Global Server';
+                    document.getElementById('geo-location').innerText = loc;
+                })
+                .catch(() => {
+                    document.getElementById('geo-location').innerText = 'Connected';
+                });
+        }
+
+        document.getElementById('auth-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const user = document.getElementById('server-user').value.trim();
+            const pass = document.getElementById('server-pass').value.trim();
+            const errorMsg = document.getElementById('error-msg');
+            const loginBtn = document.getElementById('login-btn');
+
+            loginBtn.innerText = "Authenticating...";
+            errorMsg.classList.add('hidden');
+
+            const testUrl = `${ENCODED_SERVER}/player_api.php?username=${user}&password=${pass}`;
+
+            fetch(testUrl)
+                .then(res => res.json())
+                .then(data => {
+                    if(data && data.user_info && data.user_info.auth === 1) {
+                        const sessionData = { u: user, p: pass, t: Date.now() };
+                        localStorage.setItem(STORAGE_KEY, btoa(JSON.stringify(sessionData)));
+                        enterApp();
+                    } else {
+                        errorMsg.classList.remove('hidden');
+                        loginBtn.innerText = "Sign In";
+                    }
+                })
+                .catch(() => {
+                    errorMsg.classList.remove('hidden');
+                    loginBtn.innerText = "Sign In";
+                });
+        });
+
+        function enterApp() {
+            document.getElementById('login-screen').classList.add('hidden');
+            document.getElementById('app-content').classList.remove('hidden');
+            initHeaderWidgets();
+        }
+
+        function logout() {
+            localStorage.removeItem(STORAGE_KEY);
+            location.reload();
+        }
+
+        function getAuth() {
+            try {
+                const raw = localStorage.getItem(STORAGE_KEY);
+                return raw ? JSON.parse(atob(raw)) : null;
+            } catch(e) {
+                return null;
+            }
+        }
+
+        function loadCategory(type) {
+            currentType = type;
+            const auth = getAuth();
+            if(!auth) return logout();
+
+            document.getElementById('dashboard-sections').classList.add('hidden');
+            document.getElementById('hero-banner').classList.add('hidden');
+            const displayArea = document.getElementById('content-display-area');
+            displayArea.classList.remove('hidden');
+            
+            const titleEl = document.getElementById('section-title');
+            const gridEl = document.getElementById('items-grid');
+            
+            titleEl.innerText = type === 'live' ? 'Live TV Categories' : type === 'movies' ? 'Movie Categories' : 'Series Categories';
+            gridEl.innerHTML = `<p class="text-gray-400 text-sm col-span-full text-center py-12">Loading categories...</p>`;
+
+            const actionName = type === 'live' ? 'live_categories' : type === 'movies' ? 'vod_categories' : 'series_categories';
+            const apiEndpoint = `${ENCODED_SERVER}/player_api.php?username=${auth.u}&password=${auth.p}&action=${actionName}`;
+
+            fetch(apiEndpoint)
+                .then(res => res.json())
+                .then(data => {
+                    if(Array.isArray(data) && data.length > 0) {
+                        gridEl.innerHTML = '';
+                        data.forEach(cat => {
+                            const catId = cat.category_id;
+                            const catName = cat.category_name || cat.category_title || cat.name || "Category";
+                            const card = document.createElement('div');
+                            card.tabIndex = 0;
+                            card.className = "bg-gray-900/90 border border-gray-800 hover:border-red-600 focus:border-red-600 rounded-xl p-5 text-center cursor-pointer transition duration-300 flex flex-col justify-center items-center h-28 shadow-md";
+                            card.innerHTML = `<span class="text-sm font-bold text-gray-200">${catName}</span>`;
+                            card.onclick = () => loadItems(catId, catName);
+                            gridEl.appendChild(card);
+                        });
+                    } else {
+                        gridEl.innerHTML = `<p class="text-red-400 text-sm col-span-full text-center py-12">No categories found.</p>`;
+                    }
+                })
+                .catch(() => {
+                    gridEl.innerHTML = `<p class="text-red-400 text-sm col-span-full text-center py-12">Error connecting to server.</p>`;
+                });
+        }
+
+        function loadItems(categoryId, categoryName) {
+            const auth = getAuth();
+            if(!auth) return logout();
+
+            const titleEl = document.getElementById('section-title');
+            const gridEl = document.getElementById('items-grid');
+
+            titleEl.innerText = `${categoryName} - Streams`;
+            gridEl.innerHTML = `<p class="text-gray-400 text-sm col-span-full text-center py-12">Loading streams...</p>`;
+
+            const actionName = currentType === 'live' ? 'get_live_streams' : currentType === 'movies' ? 'get_vod_streams' : 'get_series';
+            const apiEndpoint = `${ENCODED_SERVER}/player_api.php?username=${auth.u}&password=${auth.p}&action=${actionName}&category_id=${categoryId}`;
+
+            fetch(apiEndpoint)
+                .then(res => res.json())
+                .then(data => {
+                    if(Array.isArray(data) && data.length > 0) {
+                        gridEl.innerHTML = '';
+                        data.forEach(item => {
+                            const itemId = item.stream_id || item.series_id;
+                            const itemName = item.name || item.title || "Stream";
+                            const itemIcon = item.stream_icon || item.cover || "";
+                            
+                            const card = document.createElement('div');
+                            card.tabIndex = 0;
+                            card.className = "bg-gray-900 border border-gray-800 hover:border-red-600 focus:border-red-600 rounded-xl p-3 text-center cursor-pointer transition duration-300 flex flex-col items-center space-y-2 h-40 shadow-md overflow-hidden";
+                            
+                            let thumbHtml = itemIcon ? `<img src="${itemIcon}" class="w-16 h-20 object-cover rounded-lg border border-gray-800" onerror="this.style.display='none'">` : `<div class="w-16 h-20 bg-gray-800 rounded-lg flex items-center justify-center text-xs text-gray-500">No Image</div>`;
+
+                            card.innerHTML = `
+                                ${thumbHtml}
+                                <span class="text-xs font-bold text-gray-200 line-clamp-2">${itemName}</span>
+                            `;
+                            card.onclick = () => playStream(itemId, itemName);
+                            gridEl.appendChild(card);
+                        });
+                    } else {
+                        gridEl.innerHTML = `<p class="text-red-400 text-sm col-span-full text-center py-12">No streams available.</p>`;
+                    }
+                })
+                .catch(() => {
+                    gridEl.innerHTML = `<p class="text-red-400 text-sm col-span-full text-center py-12">Error loading streams.</p>`;
+                });
+        }
+
+        function playStream(streamId, streamName) {
+            const auth = getAuth();
+            if(!auth) return;
+            currentStreamId = streamId;
+
+            let streamUrl = "";
+            const trailerBtn = document.getElementById('trailer-btn');
+
+            if(currentType === 'live') {
+                streamUrl = `${ENCODED_SERVER}/live/${auth.u}/${auth.p}/${streamId}.ts`;
+                trailerBtn.classList.add('hidden');
+            } else if(currentType === 'movies') {
+                streamUrl = `${ENCODED_SERVER}/movie/${auth.u}/${auth.p}/${streamId}.mp4`;
+                trailerBtn.classList.remove('hidden'); // إظهار زر التريلر للأفلام
+            } else {
+                alert("Series playback selected.");
+                return;
+            }
+
+            document.getElementById('player-title').innerText = `Now Playing: ${streamName}`;
+            const videoPlayer = document.getElementById('video-stream-player');
+            videoPlayer.src = streamUrl;
+            document.getElementById('player-view').classList.remove('hidden');
+            videoPlayer.play();
+        }
+
+        function playTrailer() {
+            if(!currentStreamId) return;
+            const auth = getAuth();
+            // جلب معلومات الفيلم للحصول على رابط التريلر من TMDB أو السيرفر
+            const infoUrl = `${ENCODED_SERVER}/player_api.php?username=${auth.u}&password=${auth.p}&action=get_vod_info&vod_id=${currentStreamId}`;
+            
+            fetch(infoUrl)
+                .then(res => res.json())
+                .then(data => {
+                    if(data && data.info && data.info.youtube_trailer) {
+                        let ytCode = data.info.youtube_trailer;
+                        window.open(`https://www.youtube.com/watch?v=${ytCode}`, '_blank');
+                    } else {
+                        alert("Trailer not available for this title.");
+                    }
+                })
+                .catch(() => {
+                    alert("Could not load trailer.");
+                });
+        }
+
+        function openMultiScreen() {
+            document.getElementById('multiscreen-view').classList.remove('hidden');
+        }
+
+        function closeMultiScreen() {
+            document.getElementById('ms-player-1').pause();
+            document.getElementById('ms-player-2').pause();
+            document.getElementById('multiscreen-view').classList.add('hidden');
+        }
+
+        function closePlayer() {
+            const videoPlayer = document.getElementById('video-stream-player');
+            videoPlayer.pause();
+            videoPlayer.src = "";
+            document.getElementById('player-view').classList.add('hidden');
+        }
+
+        function backToDashboard() {
+            document.getElementById('content-display-area').classList.add('hidden');
+            document.getElementById('dashboard-sections').classList.remove('hidden');
+            document.getElementById('hero-banner').classList.remove('hidden');
+        }
+
+        window.onload = () => {
+            if(getAuth()) {
+                enterApp();
+            }
+        }
+    </script>
+</body>
+</html>
